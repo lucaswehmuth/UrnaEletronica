@@ -1,5 +1,6 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
+#include <netinet/ip.h>
 #include <arpa/inet.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -196,29 +197,26 @@ int main(int argc, char *argv[]) {
 
     // configurando o server para utilizar IPv4 e SOCK_STREAM para TCP (reliable-connection)
     server_socket=socket(AF_INET, SOCK_STREAM, 0);
-    memset(&server, '0', sizeof(server));
-    memset(buf, '0', sizeof(buf));
 
-
-    server.sin_addr.s_addr = inet_addr("143.107.232.253");
+    memset(&server, 0, sizeof(server));
+    server.sin_addr.s_addr = htonl(INADDR_ANY);
     server.sin_family = AF_INET;
-    server.sin_port = htons(22200);
+    server.sin_port = htons(40002);
 
+    // fazendo bing
+    bind(server_socket, (struct sockaddr*) &server, sizeof(server));
 
-
-    bind(server_socket, (struct sockaddr*)&server, sizeof(server));
+    // escutando ate 10 clientes ao mesmo tempo
     listen(server_socket, 10);
 
-
-    #pragma clang diagnostic push
-    #pragma clang diagnostic ignored "-Wmissing-noreturn"
+    c = sizeof(client);
 
     while (1) {
 
         // cria conexao com o cliente e prossiga, caso contrario, tenta novamente até obter sucesso na conexão
-        if((client_socket = accept(server_socket, (struct sockaddr*) &client, (socklen_t*)&c) ) > 0){
+        if((client_socket = accept(server_socket, (struct sockaddr*)&client, &c )) > 0){
 
-            puts("Conexão estabelecida.");
+      printf("Conexão estabelecida.\n");
 
             // recebe o op_code do cliente e converte para int
             recv(client_socket , buf , 2048 , 0);
@@ -272,9 +270,8 @@ int main(int argc, char *argv[]) {
 
         }
         else
-            puts("Conexão falhou.");
+           printf("Conexão falhou. boa sorte\n");
     }
 
-    #pragma clang diagnostic pop
-}
 
+}
